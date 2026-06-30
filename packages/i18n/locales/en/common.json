@@ -692,6 +692,7 @@
   "password_complexity_requirement": "Should contain a number, uppercase and lowercase letters",
   "incorrect_password": "Password is incorrect.",
   "incorrect_email_password": "Email or password is incorrect.",
+  "identity_provider_login_only": "Password login is disabled. Please sign in with your identity provider.",
   "compliance": "Compliance",
   "compliance_description": "Access compliance documents, certifications, and data protection agreements",
   "data_privacy": "Data privacy",

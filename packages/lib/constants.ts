@@ -3,6 +3,7 @@
  * prepends https:// to make it valid for URL parsing.
  * This handles cases where environment variables have their protocol stripped
  */
+import process from "node:process";
 function ensureProtocol(url: string | undefined): string {
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -131,6 +132,20 @@ export const IS_TEAM_BILLING_ENABLED = !!(IS_STRIPE_ENABLED && HOSTED_CAL_FEATUR
 
 export const IS_TEAM_BILLING_ENABLED_CLIENT =
   !!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY && HOSTED_CAL_FEATURES;
+
+/**
+ * Keycloak OIDC SSO (NextAuth). Opt-in: enabled only when SSO_KEYCLOAK_ENABLED="true"
+ * and all three Keycloak env vars are present. Keycloak 26.x issuer has no /auth prefix,
+ * e.g. https://<host>/realms/<realm>.
+ */
+export const SSO_KEYCLOAK_ENABLED =
+  process.env.SSO_KEYCLOAK_ENABLED === "true" &&
+  !!process.env.KEYCLOAK_CLIENT_ID &&
+  !!process.env.KEYCLOAK_CLIENT_SECRET &&
+  !!process.env.KEYCLOAK_ISSUER;
+
+/** When true, the local email/password login is rejected so users must authenticate via Keycloak. */
+export const SSO_KEYCLOAK_DISABLE_PASSWORD_LOGIN = process.env.SSO_KEYCLOAK_DISABLE_PASSWORD_LOGIN === "true";
 
 export const FULL_NAME_LENGTH_MAX_LIMIT = 50;
 export const API_NAME_LENGTH_MAX_LIMIT = 80;
