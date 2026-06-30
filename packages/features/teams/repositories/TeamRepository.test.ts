@@ -97,4 +97,55 @@ describe("TeamRepository", () => {
       );
     });
   });
+
+  describe("isSlugAvailableForUpdate", () => {
+    it("returns false when another team already uses the slug under the same parent", async () => {
+      prismaMock.team.findFirst.mockResolvedValue({ id: 2 } as never);
+
+      const available = await repo.isSlugAvailableForUpdate({ slug: "acme", teamId: 1 });
+
+      expect(prismaMock.team.findFirst).toHaveBeenCalledWith({
+        where: { slug: "acme", parentId: null, id: { not: 1 } },
+        select: { id: true },
+      });
+      expect(available).toBe(false);
+    });
+
+    it("returns true when no other team uses the slug", async () => {
+      prismaMock.team.findFirst.mockResolvedValue(null as never);
+
+      const available = await repo.isSlugAvailableForUpdate({ slug: "acme", teamId: 1, parentId: 9 });
+
+      expect(prismaMock.team.findFirst).toHaveBeenCalledWith({
+        where: { slug: "acme", parentId: 9, id: { not: 1 } },
+        select: { id: true },
+      });
+      expect(available).toBe(true);
+    });
+  });
+
+  describe("clearEventTypeLeadThreshold", () => {
+    it("nulls maxLeadThreshold for every event type of the team", async () => {
+      prismaMock.eventType.updateMany.mockResolvedValue({ count: 3 } as never);
+
+      await repo.clearEventTypeLeadThreshold({ teamId: 5 });
+
+      expect(prismaMock.eventType.updateMany).toHaveBeenCalledWith({
+        where: { teamId: 5 },
+        data: { maxLeadThreshold: null },
+      });
+    });
+  });
+
+  describe("deleteById", () => {
+    it("clears invite tokens before deleting the team in one transaction", async () => {
+      prismaMock.$transaction.mockResolvedValue([] as never);
+
+      await repo.deleteById({ id: 7 });
+
+      expect(prismaMock.verificationToken.deleteMany).toHaveBeenCalledWith({ where: { teamId: 7 } });
+      expect(prismaMock.team.delete).toHaveBeenCalledWith({ where: { id: 7 } });
+      expect(prismaMock.$transaction).toHaveBeenCalled();
+    });
+  });
 });

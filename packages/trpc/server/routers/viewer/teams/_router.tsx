@@ -3,7 +3,10 @@ import { TRPCError } from "@trpc/server";
 import authedProcedure from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
 import { ZCreateInputSchema } from "./create.schema";
+import { ZDeleteInputSchema } from "./delete.schema";
+import { ZGetInputSchema } from "./get.schema";
 import { ZGetListSchema } from "./list.schema";
+import { ZUpdateInputSchema } from "./update.schema";
 
 // Disabling the feature flag removes the whole Teams surface at the API boundary
 // while keeping the router registered, so dependent client types stay stable.
@@ -28,5 +31,20 @@ export const teamsRouter = router({
   listOwnedTeams: teamsProcedure.query(async ({ ctx }) => {
     const handler = (await import("./listOwnedTeams.handler")).listOwnedTeamsHandler;
     return handler({ ctx });
+  }),
+
+  get: teamsProcedure.input(ZGetInputSchema).query(async ({ ctx, input }) => {
+    const handler = (await import("./get.handler")).getHandler;
+    return handler({ ctx, input });
+  }),
+
+  update: teamsProcedure.input(ZUpdateInputSchema).mutation(async ({ ctx, input }) => {
+    const handler = (await import("./update.handler")).updateHandler;
+    return handler({ ctx, input });
+  }),
+
+  delete: teamsProcedure.input(ZDeleteInputSchema).mutation(async ({ ctx, input }) => {
+    const handler = (await import("./delete.handler")).deleteHandler;
+    return handler({ ctx, input });
   }),
 });

@@ -25,6 +25,14 @@ const teamSelect = {
   isOrganization: true,
 } satisfies Prisma.TeamSelect;
 
+const teamDetailSelect = {
+  ...teamSelect,
+  bookingLimits: true,
+  includeManagedEventsInLimits: true,
+  rrResetInterval: true,
+  rrTimestampBasis: true,
+} satisfies Prisma.TeamSelect;
+
 export type TeamListItem = Prisma.TeamGetPayload<{ select: typeof teamSelect }> & {
   role: MembershipRole;
   accepted: boolean;
@@ -108,5 +116,62 @@ export class TeamRepository {
     });
 
     return memberships.map(({ team, role, accepted }) => ({ ...team, role, accepted }));
+  }
+
+  async findById({ id }: { id: number }) {
+    return this.prismaClient.team.findUnique({
+      where: { id },
+      select: teamDetailSelect,
+    });
+  }
+
+  async findIsOrganizationById({ id }: { id: number }) {
+    return this.prismaClient.team.findUnique({
+      where: { id },
+      select: { isOrganization: true },
+    });
+  }
+
+  // True when no OTHER team already uses the slug under the same parent (org) scope.
+  async isSlugAvailableForUpdate({
+    slug,
+    teamId,
+    parentId = null,
+  }: {
+    slug: string;
+    teamId: number;
+    parentId?: number | null;
+  }): Promise<boolean> {
+    const existing = await this.prismaClient.team.findFirst({
+      where: { slug, parentId, id: { not: teamId } },
+      select: { id: true },
+    });
+    return !existing;
+  }
+
+  async updateById({ id, data }: { id: number; data: Prisma.TeamUpdateInput }) {
+    return this.prismaClient.team.update({
+      where: { id },
+      data,
+      select: teamDetailSelect,
+    });
+  }
+
+  // Round-robin load balancing relies on CREATED_AT timestamps; moving a team off
+  // that basis must clear the per-event lead threshold that drives it.
+  async clearEventTypeLeadThreshold({ teamId }: { teamId: number }) {
+    return this.prismaClient.eventType.updateMany({
+      where: { teamId },
+      data: { maxLeadThreshold: null },
+    });
+  }
+
+  // VerificationToken.team is the only team relation without onDelete: Cascade,
+  // so pending invite tokens must be removed before the team row can be deleted.
+  async deleteById({ id }: { id: number }) {
+    return this.prismaClient.$transaction([
+      this.prismaClient.verificationToken.deleteMany({ where: { teamId: id } }),
+      this.prismaClient.team.delete({ where: { id } }),
+    ]);
   }
 }
