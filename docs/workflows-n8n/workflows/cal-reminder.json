@@ -1,0 +1,87 @@
+{
+  "name": "cal — Reminder (H-X before start)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cal-reminder",
+        "options": { "rawBody": true }
+      },
+      "id": "webhook-reminder",
+      "name": "Cal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "cal-reminder"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst secret = process.env.CAL_WEBHOOK_SECRET;\nif (!secret) throw new Error('CAL_WEBHOOK_SECRET not set');\nconst item = items[0].json;\nconst rawBody = typeof item.body === 'string' ? item.body : JSON.stringify(item.body);\nconst h = item.headers || {};\nconst received = h['x-cal-signature-256'] || h['X-Cal-Signature-256'];\nif (!received) throw new Error('Missing X-Cal-Signature-256');\nconst expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');\nconst a = Buffer.from(expected), b = Buffer.from(String(received));\nif (!(a.length === b.length && crypto.timingSafeEqual(a, b))) throw new Error('Invalid signature');\nconst parsed = typeof item.body === 'string' ? JSON.parse(item.body) : item.body;\nreturn [{ json: parsed }];"
+      },
+      "id": "verify-hmac",
+      "name": "Verify HMAC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json.triggerEvent }}", "value2": "BOOKING_CREATED" }
+          ]
+        }
+      },
+      "id": "is-created",
+      "name": "Is BOOKING_CREATED",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Idempotency: skip if this (uid:reminder) was already handled.\nconst data = $getWorkflowStaticData('global');\ndata.seen = data.seen || {};\nconst key = items[0].json.payload.uid + ':reminder';\nif (data.seen[key]) return [];\ndata.seen[key] = true;\n// Compute reminder time = startTime - REMINDER_HOURS (default 24h).\nconst hours = Number(process.env.REMINDER_HOURS || 24);\nconst start = new Date(items[0].json.payload.startTime);\nconst remindAt = new Date(start.getTime() - hours * 3600 * 1000).toISOString();\nreturn [{ json: { ...items[0].json, remindAt } }];"
+      },
+      "id": "dedupe",
+      "name": "Dedupe + compute time",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.remindAt }}"
+      },
+      "id": "wait",
+      "name": "Wait until H-X",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "webhookId": "cal-reminder-wait"
+    },
+    {
+      "parameters": {
+        "fromEmail": "no-reply@example.com",
+        "toEmail": "={{ $json.payload.attendees[0].email }}",
+        "subject": "=Reminder: {{ $json.payload.title }}",
+        "text": "=Hi {{ $json.payload.attendees[0].name }},\n\nThis is a reminder for \"{{ $json.payload.title }}\" starting at {{ $json.payload.startTime }}.\n\nSee you soon!"
+      },
+      "id": "send-email",
+      "name": "Send reminder (configure SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Cal Webhook": { "main": [[{ "node": "Verify HMAC", "type": "main", "index": 0 }]] },
+    "Verify HMAC": { "main": [[{ "node": "Is BOOKING_CREATED", "type": "main", "index": 0 }]] },
+    "Is BOOKING_CREATED": { "main": [[{ "node": "Dedupe + compute time", "type": "main", "index": 0 }]] },
+    "Dedupe + compute time": { "main": [[{ "node": "Wait until H-X", "type": "main", "index": 0 }]] },
+    "Wait until H-X": { "main": [[{ "node": "Send reminder (configure SMTP)", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}
