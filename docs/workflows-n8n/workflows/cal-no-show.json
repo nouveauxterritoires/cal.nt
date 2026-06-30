@@ -1,0 +1,74 @@
+{
+  "name": "cal — No-show follow-up (BOOKING_NO_SHOW_UPDATED)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cal-no-show",
+        "options": { "rawBody": true }
+      },
+      "id": "webhook-no-show",
+      "name": "Cal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "cal-no-show"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst secret = process.env.CAL_WEBHOOK_SECRET;\nif (!secret) throw new Error('CAL_WEBHOOK_SECRET not set');\nconst item = items[0].json;\nconst rawBody = typeof item.body === 'string' ? item.body : JSON.stringify(item.body);\nconst h = item.headers || {};\nconst received = h['x-cal-signature-256'] || h['X-Cal-Signature-256'];\nif (!received) throw new Error('Missing X-Cal-Signature-256');\nconst expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');\nconst a = Buffer.from(expected), b = Buffer.from(String(received));\nif (!(a.length === b.length && crypto.timingSafeEqual(a, b))) throw new Error('Invalid signature');\nconst parsed = typeof item.body === 'string' ? JSON.parse(item.body) : item.body;\nreturn [{ json: parsed }];"
+      },
+      "id": "verify-hmac",
+      "name": "Verify HMAC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.triggerEvent === 'BOOKING_NO_SHOW_UPDATED' && ($json.payload.noShowHost === true || ($json.payload.attendees || []).some(a => a.noShow)) }}", "value2": true }
+          ]
+        }
+      },
+      "id": "is-no-show",
+      "name": "Is a no-show",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Idempotency: one relance per booking no-show.\nconst data = $getWorkflowStaticData('global');\ndata.seen = data.seen || {};\nconst key = items[0].json.payload.uid + ':no-show';\nif (data.seen[key]) return [];\ndata.seen[key] = true;\nreturn items;"
+      },
+      "id": "dedupe",
+      "name": "Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "no-reply@example.com",
+        "toEmail": "={{ ($json.payload.attendees && $json.payload.attendees[0] && $json.payload.attendees[0].email) || $json.payload.organizer.email }}",
+        "subject": "=We missed you: {{ $json.payload.title }}",
+        "text": "=Hi,\n\nIt looks like the meeting \"{{ $json.payload.title }}\" was marked as a no-show. Would you like to reschedule? Reply to this email and we'll find a new time."
+      },
+      "id": "send-email",
+      "name": "Send relance (configure SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Cal Webhook": { "main": [[{ "node": "Verify HMAC", "type": "main", "index": 0 }]] },
+    "Verify HMAC": { "main": [[{ "node": "Is a no-show", "type": "main", "index": 0 }]] },
+    "Is a no-show": { "main": [[{ "node": "Dedupe", "type": "main", "index": 0 }]] },
+    "Dedupe": { "main": [[{ "node": "Send relance (configure SMTP)", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}

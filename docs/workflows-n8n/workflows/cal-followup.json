@@ -1,0 +1,74 @@
+{
+  "name": "cal — Follow-up (after MEETING_ENDED)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cal-followup",
+        "options": { "rawBody": true }
+      },
+      "id": "webhook-followup",
+      "name": "Cal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "cal-followup"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst secret = process.env.CAL_WEBHOOK_SECRET;\nif (!secret) throw new Error('CAL_WEBHOOK_SECRET not set');\nconst item = items[0].json;\nconst rawBody = typeof item.body === 'string' ? item.body : JSON.stringify(item.body);\nconst h = item.headers || {};\nconst received = h['x-cal-signature-256'] || h['X-Cal-Signature-256'];\nif (!received) throw new Error('Missing X-Cal-Signature-256');\nconst expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');\nconst a = Buffer.from(expected), b = Buffer.from(String(received));\nif (!(a.length === b.length && crypto.timingSafeEqual(a, b))) throw new Error('Invalid signature');\nconst parsed = typeof item.body === 'string' ? JSON.parse(item.body) : item.body;\nreturn [{ json: parsed }];"
+      },
+      "id": "verify-hmac",
+      "name": "Verify HMAC",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json.triggerEvent }}", "value2": "MEETING_ENDED" }
+          ]
+        }
+      },
+      "id": "is-ended",
+      "name": "Is MEETING_ENDED",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Idempotency: one follow-up per booking.\nconst data = $getWorkflowStaticData('global');\ndata.seen = data.seen || {};\nconst key = items[0].json.payload.uid + ':followup';\nif (data.seen[key]) return [];\ndata.seen[key] = true;\nreturn items;"
+      },
+      "id": "dedupe",
+      "name": "Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "no-reply@example.com",
+        "toEmail": "={{ $json.payload.attendees[0].email }}",
+        "subject": "=Thanks for meeting: {{ $json.payload.title }}",
+        "text": "=Hi {{ $json.payload.attendees[0].name }},\n\nThank you for attending \"{{ $json.payload.title }}\". If you'd like to follow up or book again, just reply to this email.\n\nBest regards."
+      },
+      "id": "send-email",
+      "name": "Send follow-up (configure SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Cal Webhook": { "main": [[{ "node": "Verify HMAC", "type": "main", "index": 0 }]] },
+    "Verify HMAC": { "main": [[{ "node": "Is MEETING_ENDED", "type": "main", "index": 0 }]] },
+    "Is MEETING_ENDED": { "main": [[{ "node": "Dedupe", "type": "main", "index": 0 }]] },
+    "Dedupe": { "main": [[{ "node": "Send follow-up (configure SMTP)", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {},
+  "pinData": {}
+}
