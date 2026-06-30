@@ -1,11 +1,6 @@
 "use client";
 
-import type {
-  EventTypeSetupProps,
-  FormValues,
-  Host,
-  TeamMember,
-} from "@calcom/features/eventtypes/lib/types";
+import type { EventTypeSetupProps, FormValues, Host } from "@calcom/features/eventtypes/lib/types";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { SchedulingType } from "@calcom/prisma/enums";
 import { Avatar } from "@calcom/ui/components/avatar";
@@ -19,7 +14,8 @@ const DEFAULT_WEIGHT = 100;
 
 type Props = {
   orgId: number | null;
-  teamMembers: TeamMember[];
+  // Inferred from getEventTypeById's return; each member exposes id/name/email/avatar (not value/label).
+  teamMembers: EventTypeSetupProps["teamMembers"];
   team: EventTypeSetupProps["team"];
   eventType: EventTypeSetupProps["eventType"];
 };
@@ -64,7 +60,7 @@ export const EventTeamAssignmentTab = ({ teamMembers, eventType }: Props) => {
   const onToggleAssignAll = (checked: boolean) => {
     formMethods.setValue("assignAllTeamMembers", checked, { shouldDirty: true });
     if (checked) {
-      setHosts(teamMembers.map((member) => toHost(Number(member.value), isCollective)));
+      setHosts(teamMembers.map((member) => toHost(member.id, isCollective)));
     }
   };
 
@@ -135,20 +131,21 @@ export const EventTeamAssignmentTab = ({ teamMembers, eventType }: Props) => {
         ) : (
           <ul className="divide-subtle mt-4 divide-y">
             {teamMembers.map((member) => {
-              const userId = Number(member.value);
+              const userId = member.id;
+              const displayName = member.name ?? member.email;
               const checked = assignAllTeamMembers || selectedUserIds.has(userId);
               return (
-                <li key={member.value} className="flex items-center gap-3 py-2.5">
+                <li key={userId} className="flex items-center gap-3 py-2.5">
                   <input
                     type="checkbox"
-                    aria-label={member.label}
+                    aria-label={displayName}
                     checked={checked}
                     disabled={assignAllTeamMembers}
                     onChange={(e) => onToggleMember(userId, e.target.checked)}
                   />
-                  <Avatar size="sm" alt={member.label} imageSrc={member.avatar} />
+                  <Avatar size="sm" alt={displayName} imageSrc={member.avatar} />
                   <div className="flex flex-col">
-                    <span className="text-emphasis text-sm font-medium">{member.label}</span>
+                    <span className="text-emphasis text-sm font-medium">{displayName}</span>
                     <span className="text-subtle text-sm">{member.email}</span>
                   </div>
                   {checked && (
