@@ -700,6 +700,7 @@
   "create_a_team": "Create a new team",
   "create_a_team_description": "Create a team to collaborate with others on shared event types and availability.",
   "team_created_successfully": "Team created successfully",
+  "identity_provider_login_only": "Password login is disabled. Please sign in with your identity provider.",
   "compliance": "Compliance",
   "compliance_description": "Access compliance documents, certifications, and data protection agreements",
   "data_privacy": "Data privacy",

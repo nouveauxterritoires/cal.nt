@@ -22,6 +22,8 @@ import {
   IS_CALCOM,
   IS_TEAM_BILLING_ENABLED,
   MICROSOFT_CALENDAR_SCOPES,
+  SSO_KEYCLOAK_DISABLE_PASSWORD_LOGIN,
+  SSO_KEYCLOAK_ENABLED,
   WEBAPP_URL,
 } from "@calcom/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@calcom/lib/crypto";
@@ -49,6 +51,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers/index";
+import KeycloakProvider from "next-auth/providers/keycloak";
 import { getOrgUsernameFromEmail } from "../signup/utils/getOrgUsernameFromEmail";
 import { dub } from "./dub";
 import { ErrorCode } from "./ErrorCode";
@@ -152,6 +155,9 @@ export async function authorizeCredentials(
   credentials: Record<"email" | "password" | "totpCode" | "backupCode", string> | undefined
 ): Promise<User | null> {
   log.debug("CredentialsProvider:credentials:authorize", safeStringify({ credentials }));
+  if (SSO_KEYCLOAK_DISABLE_PASSWORD_LOGIN) {
+    throw new Error(ErrorCode.IdentityProviderLoginOnly);
+  }
   if (!credentials) {
     console.error(`For some reason credentials are missing`);
     throw new Error(ErrorCode.InternalServerError);
@@ -354,6 +360,24 @@ if (OUTLOOK_LOGIN_ENABLED && OUTLOOK_CLIENT_ID && OUTLOOK_CLIENT_SECRET) {
       },
     })
   );
+}
+
+if (SSO_KEYCLOAK_ENABLED) {
+  const keycloakClientId = process.env.KEYCLOAK_CLIENT_ID;
+  const keycloakClientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
+  // Keycloak 26.x (Quarkus): issuer has no /auth prefix, e.g. https://<host>/realms/<realm>.
+  // NextAuth discovers endpoints via the issuer's .well-known/openid-configuration and uses
+  // PKCE (S256) + state by default for the authorization-code flow on a confidential client.
+  const keycloakIssuer = process.env.KEYCLOAK_ISSUER;
+  if (keycloakClientId && keycloakClientSecret && keycloakIssuer) {
+    providers.push(
+      KeycloakProvider({
+        clientId: keycloakClientId,
+        clientSecret: keycloakClientSecret,
+        issuer: keycloakIssuer,
+      })
+    );
+  }
 }
 
 providers.push(

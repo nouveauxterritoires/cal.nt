@@ -346,6 +346,7 @@ enum IdentityProvider {
   GOOGLE
   SAML
   AZUREAD
+  KEYCLOAK
 }
 
 model DestinationCalendar {
