@@ -66,6 +66,12 @@ export function CreateTeamButton() {
 
 export function TeamsListView({ teams }: { teams: TeamList }) {
   const { t } = useLocale();
+  const router = useRouter();
+
+  const acceptOrLeave = trpc.viewer.teams.acceptOrLeave.useMutation({
+    onSuccess: () => router.refresh(),
+    onError: (err) => showToast(err.message, "error"),
+  });
 
   if (!teams.length) {
     return (
@@ -87,9 +93,26 @@ export function TeamsListView({ teams }: { teams: TeamList }) {
             <Badge variant="gray">{team.role.toLowerCase()}</Badge>
             {!team.accepted && <Badge variant="orange">{t("pending")}</Badge>}
           </div>
-          <Button color="secondary" href={`/settings/teams/${team.id}/members`}>
-            {t("manage")}
-          </Button>
+          {team.accepted ? (
+            <Button color="secondary" href={`/settings/teams/${team.id}/members`}>
+              {t("manage")}
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                color="secondary"
+                loading={acceptOrLeave.isPending}
+                onClick={() => acceptOrLeave.mutate({ teamId: team.id, accept: true })}>
+                {t("accept")}
+              </Button>
+              <Button
+                color="destructive"
+                variant="icon"
+                StartIcon="x"
+                onClick={() => acceptOrLeave.mutate({ teamId: team.id, accept: false })}
+              />
+            </div>
+          )}
         </li>
       ))}
     </ul>

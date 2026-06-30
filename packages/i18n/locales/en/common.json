@@ -694,6 +694,7 @@
   "incorrect_email_password": "Email or password is incorrect.",
   "manage": "Manage",
   "invitation_sent": "Invitation sent",
+  "disband_team_description": "Permanently delete this team and remove all its members.",
   "no_members": "No members yet",
   "no_members_description": "Invite people to start collaborating in this team.",
   "create_a_team": "Create a new team",
