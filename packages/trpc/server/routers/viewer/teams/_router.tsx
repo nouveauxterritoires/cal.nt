@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import authedProcedure from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
 import { ZAcceptOrLeaveInputSchema } from "./acceptOrLeave.schema";
+import { ZAddMembersToEventTypesInputSchema } from "./addMembersToEventTypes.schema";
 import { ZChangeMemberRoleInputSchema } from "./changeMemberRole.schema";
 import { ZCreateInputSchema } from "./create.schema";
 import { ZDeleteInputSchema } from "./delete.schema";
@@ -11,6 +12,7 @@ import { ZInviteMemberInputSchema } from "./inviteMember.schema";
 import { ZInviteMemberByTokenInputSchema } from "./inviteMemberByToken.schema";
 import { ZGetListSchema } from "./list.schema";
 import { ZListMembersInputSchema } from "./listMembers.schema";
+import { ZRemoveHostsFromEventTypesInputSchema } from "./removeHostsFromEventTypes.schema";
 import { ZRemoveMemberInputSchema } from "./removeMember.schema";
 import { ZUpdateInputSchema } from "./update.schema";
 
@@ -83,6 +85,20 @@ export const teamsRouter = router({
     .input(ZInviteMemberByTokenInputSchema)
     .mutation(async ({ ctx, input }) => {
       const handler = (await import("./inviteMemberByToken.handler")).inviteMemberByTokenHandler;
+      return handler({ ctx, input });
+    }),
+
+  addMembersToEventTypes: teamsProcedure
+    .input(ZAddMembersToEventTypesInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const handler = (await import("./addMembersToEventTypes.handler")).addMembersToEventTypesHandler;
+      return handler({ ctx, input });
+    }),
+
+  removeHostsFromEventTypes: teamsProcedure
+    .input(ZRemoveHostsFromEventTypesInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const handler = (await import("./removeHostsFromEventTypes.handler")).removeHostsFromEventTypesHandler;
       return handler({ ctx, input });
     }),
 });
