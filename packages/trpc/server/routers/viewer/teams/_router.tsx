@@ -2,10 +2,14 @@ import { TEAMS_ENABLED } from "@calcom/lib/constants";
 import { TRPCError } from "@trpc/server";
 import authedProcedure from "../../../procedures/authedProcedure";
 import { router } from "../../../trpc";
+import { ZAcceptOrLeaveInputSchema } from "./acceptOrLeave.schema";
+import { ZChangeMemberRoleInputSchema } from "./changeMemberRole.schema";
 import { ZCreateInputSchema } from "./create.schema";
 import { ZDeleteInputSchema } from "./delete.schema";
 import { ZGetInputSchema } from "./get.schema";
 import { ZGetListSchema } from "./list.schema";
+import { ZListMembersInputSchema } from "./listMembers.schema";
+import { ZRemoveMemberInputSchema } from "./removeMember.schema";
 import { ZUpdateInputSchema } from "./update.schema";
 
 // Disabling the feature flag removes the whole Teams surface at the API boundary
@@ -45,6 +49,26 @@ export const teamsRouter = router({
 
   delete: teamsProcedure.input(ZDeleteInputSchema).mutation(async ({ ctx, input }) => {
     const handler = (await import("./delete.handler")).deleteHandler;
+    return handler({ ctx, input });
+  }),
+
+  listMembers: teamsProcedure.input(ZListMembersInputSchema).query(async ({ ctx, input }) => {
+    const handler = (await import("./listMembers.handler")).listMembersHandler;
+    return handler({ ctx, input });
+  }),
+
+  acceptOrLeave: teamsProcedure.input(ZAcceptOrLeaveInputSchema).mutation(async ({ ctx, input }) => {
+    const handler = (await import("./acceptOrLeave.handler")).acceptOrLeaveHandler;
+    return handler({ ctx, input });
+  }),
+
+  removeMember: teamsProcedure.input(ZRemoveMemberInputSchema).mutation(async ({ ctx, input }) => {
+    const handler = (await import("./removeMember.handler")).removeMemberHandler;
+    return handler({ ctx, input });
+  }),
+
+  changeMemberRole: teamsProcedure.input(ZChangeMemberRoleInputSchema).mutation(async ({ ctx, input }) => {
+    const handler = (await import("./changeMemberRole.handler")).changeMemberRoleHandler;
     return handler({ ctx, input });
   }),
 });
