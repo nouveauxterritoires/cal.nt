@@ -7,6 +7,8 @@ import { ZChangeMemberRoleInputSchema } from "./changeMemberRole.schema";
 import { ZCreateInputSchema } from "./create.schema";
 import { ZDeleteInputSchema } from "./delete.schema";
 import { ZGetInputSchema } from "./get.schema";
+import { ZInviteMemberInputSchema } from "./inviteMember.schema";
+import { ZInviteMemberByTokenInputSchema } from "./inviteMemberByToken.schema";
 import { ZGetListSchema } from "./list.schema";
 import { ZListMembersInputSchema } from "./listMembers.schema";
 import { ZRemoveMemberInputSchema } from "./removeMember.schema";
@@ -71,4 +73,16 @@ export const teamsRouter = router({
     const handler = (await import("./changeMemberRole.handler")).changeMemberRoleHandler;
     return handler({ ctx, input });
   }),
+
+  inviteMember: teamsProcedure.input(ZInviteMemberInputSchema).mutation(async ({ ctx, input }) => {
+    const handler = (await import("./inviteMember.handler")).inviteMemberHandler;
+    return handler({ ctx, input });
+  }),
+
+  inviteMemberByToken: teamsProcedure
+    .input(ZInviteMemberByTokenInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const handler = (await import("./inviteMemberByToken.handler")).inviteMemberByTokenHandler;
+      return handler({ ctx, input });
+    }),
 });

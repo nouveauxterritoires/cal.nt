@@ -31,6 +31,23 @@ export class TeamMembershipRepository {
     });
   }
 
+  async create({
+    userId,
+    teamId,
+    role,
+    accepted,
+  }: {
+    userId: number;
+    teamId: number;
+    role: MembershipRole;
+    accepted: boolean;
+  }) {
+    return this.prismaClient.membership.create({
+      data: { userId, teamId, role, accepted },
+      select: { id: true, userId: true, teamId: true, role: true, accepted: true },
+    });
+  }
+
   async countAcceptedOwners({ teamId }: { teamId: number }): Promise<number> {
     return this.prismaClient.membership.count({
       where: { teamId, accepted: true, role: Role.OWNER },
