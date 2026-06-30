@@ -979,6 +979,8 @@
   "managed": "Managed",
   "managed_event_url_clarification": "\"username\" will be filled by the username of the members assigned",
   "assign_to": "Assign to",
+  "assign_all_team_members": "Assign all team members",
+  "no_hosts_assigned": "No hosts assigned yet. Select team members below.",
   "enter_phone_number_to_test_call": "Enter phone number to test call",
   "make_test_call": "Make test call",
   "create_new_workflow_agent": "Create new workflow cal.ai voice agent",
