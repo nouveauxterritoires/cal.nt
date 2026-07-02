@@ -1,11 +1,9 @@
 name: Cron - changeTimeZone
 
 on:
-  # "Scheduled workflows run on the latest commit on the default or base branch."
-  # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
-  schedule:
-    # Runs "At every full hour." (see https://crontab.guru)
-    - cron:  "0 * * * *"
+  # Cron désactivé sur le fork Cal.nt — à migrer vers le scheduler de deploy/nvt/.
+  # Schedule d'origine : "0 * * * *" (toutes les heures).
+  workflow_dispatch:
 
 jobs:
   cron-scheduleEmailReminders:
