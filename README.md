@@ -40,7 +40,7 @@ our changes here in the open.
   read, and learn from it — the same way we benefit from the upstream project.
 
 > This is a self-hosted project. There is no hosted/managed "Cal.nt" service. You run it on your own
-> infrastructure. Our own instance runs at [cal.nvt.one](https://cal.nvt.one).
+> infrastructure. We also run our own.
 
 ### Versioning
 
