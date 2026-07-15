@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { Controller } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
 
 import { useIsPlatform } from "@calcom/atoms/hooks/useIsPlatform";
@@ -8,10 +9,13 @@ import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { md } from "@calcom/lib/markdownIt";
 import slugify from "@calcom/lib/slugify";
 import turndown from "@calcom/lib/turndownService";
+import { SchedulingType } from "@calcom/prisma/enums";
 import { Editor } from "@calcom/ui/components/editor";
 import { Form } from "@calcom/ui/components/form";
 import { TextAreaField } from "@calcom/ui/components/form";
 import { TextField } from "@calcom/ui/components/form";
+import { Label } from "@calcom/ui/components/form";
+import { RadioArea, RadioAreaGroup } from "@calcom/ui/components/radio/RadioAreaGroup";
 import { Tooltip } from "@calcom/ui/components/tooltip";
 import type { z } from "zod";
 import { createEventTypeInput } from "@calcom/features/eventtypes/lib/types";
@@ -21,6 +25,7 @@ type CreateEventTypeFormValues = z.infer<typeof createEventTypeInput>;
 export default function CreateEventTypeForm({
   form,
   isManagedEventType,
+  isTeamEvent = false,
   handleSubmit,
   pageSlug,
   isPending,
@@ -29,6 +34,7 @@ export default function CreateEventTypeForm({
 }: {
   form: UseFormReturn<CreateEventTypeFormValues>;
   isManagedEventType: boolean;
+  isTeamEvent?: boolean;
   handleSubmit: (values: CreateEventTypeFormValues) => void;
   pageSlug?: string;
   isPending: boolean;
@@ -59,6 +65,36 @@ export default function CreateEventTypeForm({
             }
           }}
         />
+
+        {isTeamEvent && (
+          <div>
+            <Label>{t("assignment")}</Label>
+            <Controller
+              name="schedulingType"
+              control={form.control}
+              render={({ field: { value, onChange } }) => (
+                <RadioAreaGroup
+                  onValueChange={(val: string) => onChange(val)}
+                  value={value ?? undefined}
+                  className="stack-y-2"
+                  data-testid="scheduling-type-radio-group">
+                  <RadioArea value={SchedulingType.COLLECTIVE} data-testid="collective">
+                    <strong>{t("collective")}</strong>
+                    <p className="text-subtle">{t("collective_description")}</p>
+                  </RadioArea>
+                  <RadioArea value={SchedulingType.ROUND_ROBIN} data-testid="round_robin">
+                    <strong>{t("round_robin")}</strong>
+                    <p className="text-subtle">{t("round_robin_description")}</p>
+                  </RadioArea>
+                  <RadioArea value={SchedulingType.MANAGED} data-testid="managed">
+                    <strong>{t("managed")}</strong>
+                    <p className="text-subtle">{t("managed_event_description")}</p>
+                  </RadioArea>
+                </RadioAreaGroup>
+              )}
+            />
+          </div>
+        )}
 
         {urlPrefix && urlPrefix.length >= 21 ? (
           <div>
