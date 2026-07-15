@@ -15,7 +15,7 @@ import { Form } from "@calcom/ui/components/form";
 import { TextAreaField } from "@calcom/ui/components/form";
 import { TextField } from "@calcom/ui/components/form";
 import { Label } from "@calcom/ui/components/form";
-import { RadioArea, RadioAreaGroup } from "@calcom/ui/components/radio/RadioAreaGroup";
+import { RadioAreaGroup } from "@calcom/ui/components/radio";
 import { Tooltip } from "@calcom/ui/components/tooltip";
 import type { z } from "zod";
 import { createEventTypeInput } from "@calcom/features/eventtypes/lib/types";
@@ -73,24 +73,24 @@ export default function CreateEventTypeForm({
               name="schedulingType"
               control={form.control}
               render={({ field: { value, onChange } }) => (
-                <RadioAreaGroup
+                <RadioAreaGroup.Group
                   onValueChange={(val: string) => onChange(val)}
                   value={value ?? undefined}
                   className="stack-y-2"
                   data-testid="scheduling-type-radio-group">
-                  <RadioArea value={SchedulingType.COLLECTIVE} data-testid="collective">
+                  <RadioAreaGroup.Item value={SchedulingType.COLLECTIVE} data-testid="collective">
                     <strong>{t("collective")}</strong>
                     <p className="text-subtle">{t("collective_description")}</p>
-                  </RadioArea>
-                  <RadioArea value={SchedulingType.ROUND_ROBIN} data-testid="round_robin">
+                  </RadioAreaGroup.Item>
+                  <RadioAreaGroup.Item value={SchedulingType.ROUND_ROBIN} data-testid="round_robin">
                     <strong>{t("round_robin")}</strong>
                     <p className="text-subtle">{t("round_robin_description")}</p>
-                  </RadioArea>
-                  <RadioArea value={SchedulingType.MANAGED} data-testid="managed">
+                  </RadioAreaGroup.Item>
+                  <RadioAreaGroup.Item value={SchedulingType.MANAGED} data-testid="managed">
                     <strong>{t("managed")}</strong>
                     <p className="text-subtle">{t("managed_event_description")}</p>
-                  </RadioArea>
-                </RadioAreaGroup>
+                  </RadioAreaGroup.Item>
+                </RadioAreaGroup.Group>
               )}
             />
           </div>
