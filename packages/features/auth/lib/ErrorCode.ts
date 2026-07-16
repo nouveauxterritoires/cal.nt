@@ -18,4 +18,5 @@ export enum ErrorCode {
   SocialIdentityProviderRequired = "social-identity-provider-required",
   UserAccountLocked = "user-account-locked",
   PasswordPolicyViolation = "password-policy-violation",
+  IdentityProviderLoginOnly = "identity_provider_login_only",
 }

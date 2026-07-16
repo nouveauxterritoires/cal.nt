@@ -1,0 +1,21 @@
+name: Cron - downgradeUsers
+
+on:
+  # Cron désactivé sur le fork Cal.nt — à migrer vers le scheduler de deploy/nvt/.
+  # Schedule d'origine : "0 0 1 * *" (le 1er du mois à 00:00).
+  workflow_dispatch:
+jobs:
+  cron-downgradeUsers:
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_API_KEY: ${{ secrets.CRON_API_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: cURL request
+        if: ${{ env.APP_URL && env.CRON_API_KEY }}
+        run: |
+          curl ${{ secrets.APP_URL }}/api/cron/downgradeUsers \
+            -X POST \
+            -H 'content-type: application/json' \
+            -H 'authorization: ${{ secrets.CRON_API_KEY }}' \
+            -sSf

@@ -1,11 +1,9 @@
 name: Cron - webhookTriggers
 
 on:
-  # "Scheduled workflows run on the latest commit on the default or base branch."
-  # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
-  schedule:
-    # Runs “every minute” (see https://crontab.guru)
-    - cron: "* * * * *"
+  # Cron désactivé sur le fork Cal.nt — à migrer vers le scheduler de deploy/nvt/.
+  # Schedule d'origine : "* * * * *" (chaque minute).
+  workflow_dispatch:
 jobs:
   cron-webhookTriggers:
     env:

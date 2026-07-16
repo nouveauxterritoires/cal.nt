@@ -37,7 +37,7 @@ export const BASE_URL = WEBAPP_URL;
 export const WEBSITE_URL = ensureProtocol(process.env.NEXT_PUBLIC_WEBSITE_URL) || "https://cal.com";
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Cal.diy";
 export const SUPPORT_MAIL_ADDRESS = process.env.NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS || "help@cal.com";
-export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Cal.com, Inc.";
+export const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Cal.nt";
 export const SENDER_ID = process.env.NEXT_PUBLIC_SENDER_ID || "Cal";
 export const SENDER_NAME = process.env.NEXT_PUBLIC_SENDGRID_SENDER_NAME || "Cal.diy";
 export const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || APP_NAME;
@@ -131,6 +131,23 @@ export const IS_TEAM_BILLING_ENABLED = !!(IS_STRIPE_ENABLED && HOSTED_CAL_FEATUR
 
 export const IS_TEAM_BILLING_ENABLED_CLIENT =
   !!process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY && HOSTED_CAL_FEATURES;
+
+/** Gates the clean-room Teams feature (router + UI). Defaults on; set TEAMS_ENABLED="false" to disable. */
+export const TEAMS_ENABLED = process.env.TEAMS_ENABLED !== "false";
+
+/**
+ * Keycloak OIDC SSO (NextAuth). Opt-in: enabled only when SSO_KEYCLOAK_ENABLED="true"
+ * and all three Keycloak env vars are present. Keycloak 26.x issuer has no /auth prefix,
+ * e.g. https://<host>/realms/<realm>.
+ */
+export const SSO_KEYCLOAK_ENABLED =
+  process.env.SSO_KEYCLOAK_ENABLED === "true" &&
+  !!process.env.KEYCLOAK_CLIENT_ID &&
+  !!process.env.KEYCLOAK_CLIENT_SECRET &&
+  !!process.env.KEYCLOAK_ISSUER;
+
+/** When true, the local email/password login is rejected so users must authenticate via Keycloak. */
+export const SSO_KEYCLOAK_DISABLE_PASSWORD_LOGIN = process.env.SSO_KEYCLOAK_DISABLE_PASSWORD_LOGIN === "true";
 
 export const FULL_NAME_LENGTH_MAX_LIMIT = 50;
 export const API_NAME_LENGTH_MAX_LIMIT = 80;

@@ -1,0 +1,21 @@
+name: Cron - checkSmsPrices
+
+on:
+  # Cron désactivé sur le fork Cal.nt — à migrer vers le scheduler de deploy/nvt/.
+  # Schedule d'origine : "* * * * *" (chaque minute).
+  workflow_dispatch:
+jobs:
+  cron-checkSmsPrices:
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_API_KEY: ${{ secrets.CRON_API_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: cURL request
+        if: ${{ env.APP_URL && env.CRON_API_KEY }}
+        run: |
+          curl ${{ secrets.APP_URL }}/api/cron/checkSmsPrices \
+            -X POST \
+            -H 'content-type: application/json' \
+            -H 'authorization: ${{ secrets.CRON_API_KEY }}' \
+            --fail

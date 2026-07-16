@@ -5,6 +5,7 @@ export enum ErrorCode {
   NotFound = "not_found_error",
   BadRequest = "bad_request_error",
   InternalServerError = "internal_server_error",
+  IdentityProviderLoginOnly = "identity_provider_login_only",
 
   // Domain-specific error codes
   PaymentCreationFailure = "payment_not_created_error",

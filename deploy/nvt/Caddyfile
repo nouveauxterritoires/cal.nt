@@ -1,0 +1,20 @@
+# Façade cal.nvt.one — HTTP CLAIR.
+# Evolix (HAProxy) termine le TLS public avec le vrai certificat, puis forwarde en HTTP
+# vers docker02:${HOST_PORT} (10226). Caddy ne fait donc PAS de TLS : il route seulement
+# /api/v2/* -> API v2, le reste -> web. X-Forwarded-Proto=https car le public est en HTTPS.
+:80 {
+	@apiv2 path /api/v2/*
+	handle @apiv2 {
+		reverse_proxy calcom-api:3002 {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	handle {
+		reverse_proxy calcom:3000 {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	encode gzip zstd
+}
