@@ -80,10 +80,13 @@ When a task requires extensive changes, break it into multiple PRs:
 See [agents/commands.md](agents/commands.md) for full reference. Key commands:
 
 ```bash
-yarn type-check:ci --force  # Type check (always run before pushing)
-yarn biome check --write .  # Lint and format
-TZ=UTC yarn test            # Run unit tests
-yarn prisma generate        # Regenerate types after schema changes
+yarn dx                                 # First-time dev setup (starts DB + migrations + web)
+yarn type-check:ci --force              # Type check (always run before pushing)
+yarn biome check --write .              # Lint and format
+TZ=UTC yarn test                        # Run all unit tests
+TZ=UTC yarn test <file> -t "<name>"     # Run a single unit test by name
+VITEST_MODE=integration yarn test <file> # Run integration tests
+yarn prisma generate                    # Regenerate types after schema changes
 ```
 
 
@@ -113,7 +116,9 @@ yarn prisma generate        # Regenerate types after schema changes
 ## Project Structure
 
 ```
-apps/web/                    # Main Next.js application
+apps/web/                    # Main Next.js application (App Router + legacy Pages)
+apps/api/v2/                 # Platform API v2 (NestJS) — see API v2 import rules below
+apps/docs/                   # Documentation site
 packages/prisma/             # Database schema (schema.prisma) and migrations
 packages/trpc/               # tRPC API layer (routers in server/routers/)
 packages/ui/                 # Shared UI components
