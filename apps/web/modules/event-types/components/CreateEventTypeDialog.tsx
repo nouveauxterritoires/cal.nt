@@ -11,6 +11,7 @@ import { DialogClose, DialogContent, DialogFooter } from "@calcom/ui/components/
 import { showToast } from "@calcom/ui/components/toast";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { z } from "zod";
 import { useCreateEventType } from "~/event-types/hooks/useCreateEventType";
 
@@ -103,6 +104,16 @@ export function CreateEventTypeDialog({ profileOptions }: { profileOptions: Prof
 
   const { form, createMutation, isManagedEventType } = useCreateEventType(onSuccessMutation, onErrorMutation);
 
+  // Team events require a teamId and a schedulingType (enforced by createEventTypeInput).
+  // Seed both from the URL so the create mutation targets the team instead of the personal profile.
+  useEffect(() => {
+    if (!teamId) return;
+    form.setValue("teamId", teamId);
+    if (!form.getValues("schedulingType")) {
+      form.setValue("schedulingType", SchedulingType.COLLECTIVE);
+    }
+  }, [teamId, form]);
+
   const urlPrefix = WEBSITE_URL;
 
   return (
@@ -114,19 +125,18 @@ export function CreateEventTypeDialog({ profileOptions }: { profileOptions: Prof
         enableOverflow
         title={teamId ? t("add_new_team_event_type") : t("add_new_event_type")}
         description={t("new_event_type_to_book_description")}>
-        {teamId ? null : (
-          <CreateEventTypeForm
-            urlPrefix={urlPrefix}
-            isPending={createMutation.isPending}
-            form={form}
-            isManagedEventType={isManagedEventType}
-            handleSubmit={(values) => {
-              createMutation.mutate(values);
-            }}
-            SubmitButton={SubmitButton}
-            pageSlug={pageSlug}
-          />
-        )}
+        <CreateEventTypeForm
+          urlPrefix={urlPrefix}
+          isPending={createMutation.isPending}
+          form={form}
+          isManagedEventType={isManagedEventType}
+          isTeamEvent={!!teamId}
+          handleSubmit={(values) => {
+            createMutation.mutate(values);
+          }}
+          SubmitButton={SubmitButton}
+          pageSlug={pageSlug}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -454,24 +454,36 @@ export const updateHandler = async ({ ctx, input }: UpdateOptions) => {
   let hostLocationDeletions: { userId: number; eventTypeId: number }[] = [];
 
   if (teamId && hosts) {
-    // check if all hosts can be assigned (memberships that have accepted invite)
     const teamMemberIds = await membershipRepo.listAcceptedTeamMemberIds({ teamId });
     const teamMemberIdSet = new Set(teamMemberIds);
-    if (!hosts.every((host) => teamMemberIdSet.has(host.userId)) && !eventType.team?.parentId) {
+    const oldHostsSet = new Set(eventType.hosts.map((oldHost) => oldHost.userId));
+
+    // "Assign all team members" means all *accepted* members — never pending invites.
+    // Silently drop pending members from the incoming list (unless they are already
+    // on the event) so enabling the toggle can't fail the save with a new pending host.
+    const effectiveHosts = assignAllTeamMembers
+      ? hosts.filter((host) => teamMemberIdSet.has(host.userId) || oldHostsSet.has(host.userId))
+      : hosts;
+
+    const newHostsSet = new Set(effectiveHosts.map((host) => host.userId));
+
+    const existingHosts = effectiveHosts.filter((newHost) => oldHostsSet.has(newHost.userId));
+    hostLocationDeletions = existingHosts
+      .filter((host) => host.location === null)
+      .map((host) => ({ userId: host.userId, eventTypeId: id }));
+    const newHosts = effectiveHosts.filter((newHost) => !oldHostsSet.has(newHost.userId));
+    const removedHosts = eventType.hosts.filter((oldHost) => !newHostsSet.has(oldHost.userId));
+
+    // Only newly added hosts must be accepted team members. Hosts already on the
+    // event are left untouched: an event can legitimately reference a member whose
+    // invite is still pending (e.g. after duplicating a team event that used
+    // "assign all team members"), and rejecting the whole update would leave the
+    // event permanently uneditable.
+    if (!newHosts.every((host) => teamMemberIdSet.has(host.userId)) && !eventType.team?.parentId) {
       throw new TRPCError({
         code: "FORBIDDEN",
       });
     }
-
-    const oldHostsSet = new Set(eventType.hosts.map((oldHost) => oldHost.userId));
-    const newHostsSet = new Set(hosts.map((oldHost) => oldHost.userId));
-
-    const existingHosts = hosts.filter((newHost) => oldHostsSet.has(newHost.userId));
-    hostLocationDeletions = existingHosts
-      .filter((host) => host.location === null)
-      .map((host) => ({ userId: host.userId, eventTypeId: id }));
-    const newHosts = hosts.filter((newHost) => !oldHostsSet.has(newHost.userId));
-    const removedHosts = eventType.hosts.filter((oldHost) => !newHostsSet.has(oldHost.userId));
 
     data.hosts = {
       deleteMany: {
